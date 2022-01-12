@@ -3,6 +3,8 @@ import './App.css';
 
 import * as mpPose from '@mediapipe/pose';
 import * as posedetection from '@tensorflow-models/pose-detection';
+import { drawPose } from './draw_utils';
+
 import React from 'react';
 import {
   RecoilRoot,
@@ -71,13 +73,48 @@ function RenderPosesSimple() {
   </>
 }
 
+function RenderPose({ videoRef }) {
+  const canvasRef = React.useRef(null);
+  const poses = useRecoilValue(posesState);
+  React.useEffect(() => {
+    // var rafId;
+    const draw = async () => {
+      if (canvasRef.current && poses && poses.length > 0) {
+        if (videoRef.current) {
+          // canvasRef.current.getContext('2d').drawImage(
+          //   videoRef.current, 0, 0, videoRef.current.videoWidth, 225);
+
+        }
+        drawPose(
+          poses[0],
+          canvasRef.current.getContext('2d'),
+          posedetection.SupportedModels.BlazePose,
+          0)
+      }
+
+    }
+    draw();
+    // return () => {
+    //   if (rafId) {
+    //     cancelAnimationFrame(rafId);
+    //   }
+    // }
+
+  }, [poses])
+
+  return <div style={{ border: "1px solid red" }}>
+    <div>Hello</div>
+    <canvas ref={canvasRef}></canvas>
+  </div>
+}
+
 function MyApp() {
   const videoRef = React.useRef(null);
 
   usePoseTracker({ videoRef, posesState })
 
   return <>
-    <video style={{ width: '400px', height: '225px' }} ref={videoRef} autoPlay>
+    <video ref={videoRef} autoPlay>
       <source src="/home-workout.mp4" type="video/mp4" />
     </video>
     <button onClick={() => {
@@ -88,6 +125,7 @@ function MyApp() {
       }
     }}>Play/Pause</button>
     <RenderPosesSimple />
+    <RenderPose videoRef={videoRef} />
   </>
 }
 
