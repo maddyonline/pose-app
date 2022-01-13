@@ -80,11 +80,7 @@ function RenderPose({ videoRef }) {
     // var rafId;
     const draw = async () => {
       if (canvasRef.current && poses && poses.length > 0) {
-        if (videoRef.current) {
-          // canvasRef.current.getContext('2d').drawImage(
-          //   videoRef.current, 0, 0, videoRef.current.videoWidth, 225);
-
-        }
+  
         drawPose(
           poses[0],
           canvasRef.current.getContext('2d'),
@@ -104,7 +100,7 @@ function RenderPose({ videoRef }) {
 
   return <div style={{ border: "1px solid red" }}>
     <div>Hello</div>
-    <canvas ref={canvasRef}></canvas>
+    <canvas width={600} height={400} ref={canvasRef}></canvas>
   </div>
 }
 
@@ -114,7 +110,7 @@ function MyApp() {
   usePoseTracker({ videoRef, posesState })
 
   return <>
-    <video ref={videoRef} autoPlay>
+    <video width={600} height={400} ref={videoRef} autoPlay>
       <source src="/home-workout.mp4" type="video/mp4" />
     </video>
     <button onClick={() => {

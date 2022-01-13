@@ -1,7 +1,7 @@
 import * as posedetection from '@tensorflow-models/pose-detection';
 
 export function drawPose(pose, ctx, model, scoreThreshold) {
-    ctx.clearRect(0, 0, 1280, 720);
+    ctx.clearRect(0, 0, 600, 400);
     if (pose.keypoints != null) {
         drawKeypoints(pose.keypoints, ctx, model, scoreThreshold);
         drawSkeleton(pose.keypoints, ctx, model, scoreThreshold);
@@ -40,13 +40,12 @@ function drawKeypoint(keypoint, ctx, _scoreThreshold) {
     const score = keypoint.score != null ? keypoint.score : 1;
     const scoreThreshold = _scoreThreshold || 0;
 
-    // if (score >= scoreThreshold) {
-    const circle = new Path2D();
-    console.log(keypoint.x, keypoint.y)
-    circle.arc(keypoint.x/5, keypoint.y/5, 3, 0, 2 * Math.PI);
-    ctx.fill(circle);
-    ctx.stroke(circle);
-    // }
+    if (score >= scoreThreshold) {
+        const circle = new Path2D();
+        circle.arc(keypoint.x / 5, keypoint.y / 5, 3, 0, 2 * Math.PI);
+        ctx.fill(circle);
+        ctx.stroke(circle);
+    }
 }
 
 /**
