@@ -1,28 +1,35 @@
-import logo from './logo.svg';
-import './App.css';
+import logo from "./logo.svg";
+import "./App.css";
 
-import * as mpPose from '@mediapipe/pose';
-import * as posedetection from '@tensorflow-models/pose-detection';
-import { drawPose } from './draw_utils';
+import * as poseDetection from '@tensorflow-models/pose-detection';
+import * as tf from '@tensorflow/tfjs-core';
+// Register WebGL backend.
+import '@tensorflow/tfjs-backend-webgl';
 
-import React from 'react';
+import { drawPose } from "./draw_utils";
+
+
+import React from "react";
 import {
   RecoilRoot,
   atom,
   selector,
   useRecoilState,
   useRecoilValue,
-} from 'recoil';
+} from "recoil";
 
-const isVideoPlaying = video => !!(video.currentTime > 0 && !video.paused && !video.ended && video.readyState > 2);
-
+const isVideoPlaying = (video) =>
+  !!(
+    video.currentTime > 0 &&
+    !video.paused &&
+    !video.ended &&
+    video.readyState > 2
+  );
 
 const posesState = atom({
-  key: 'posesState', // unique ID (with respect to other atoms/selectors)
+  key: "posesState", // unique ID (with respect to other atoms/selectors)
   default: [], // default value (aka initial value)
 });
-
-
 
 function usePoseTracker({ videoRef, posesState }) {
   const poseDetector = React.useRef(null);
@@ -34,21 +41,23 @@ function usePoseTracker({ videoRef, posesState }) {
       if (videoRef.current && poseDetector.current) {
         const poses = await poseDetector.current.estimatePoses(
           videoRef.current,
-          { maxPoses: 1, flipHorizontal: false });
+          { maxPoses: 1, flipHorizontal: false }
+        );
         setPoses(poses);
       }
       rafId = requestAnimationFrame(runFrame);
-    }
+    };
     const start = async () => {
-      console.log("initializing mediapose", mpPose.VERSION)
-      poseDetector.current = await posedetection.createDetector(posedetection.SupportedModels.BlazePose, {
-        runtime: 'mediapipe',
-        modelType: 'heavy',
-        solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/pose@${mpPose.VERSION}`
-      });
+      const model = poseDetection.SupportedModels.BlazePose;
+      const detectorConfig = {
+        runtime: 'tfjs',
+        enableSmoothing: true,
+        modelType: 'full'
+      };
+      const detector = await poseDetection.createDetector(model, detectorConfig);
+      poseDetector.current = detector
       await runFrame();
-
-    }
+    };
     start();
 
     return () => {
@@ -59,18 +68,19 @@ function usePoseTracker({ videoRef, posesState }) {
       if (poseDetector.current) {
         poseDetector.current.dispose();
       }
-    }
-  }, [])
-
-
+    };
+  }, []);
 }
-
 
 function RenderPosesSimple() {
   const poses = useRecoilValue(posesState);
-  return <>
-    {poses && poses.length > 0 ? `${poses[0].keypoints[0].x}` : "nothing to show"}
-  </>
+  return (
+    <>
+      {poses && poses.length > 0
+        ? `${poses[0].keypoints[0].x}`
+        : "nothing to show"}
+    </>
+  );
 }
 
 function RenderPose({ videoRef }) {
@@ -80,53 +90,61 @@ function RenderPose({ videoRef }) {
     // var rafId;
     const draw = async () => {
       if (canvasRef.current && poses && poses.length > 0) {
-  
         drawPose(
           poses[0],
-          canvasRef.current.getContext('2d'),
-          posedetection.SupportedModels.BlazePose,
-          0)
+          canvasRef.current.getContext("2d"),
+          poseDetection.SupportedModels.BlazePose,
+          0
+        );
       }
-
-    }
+    };
     draw();
     // return () => {
     //   if (rafId) {
     //     cancelAnimationFrame(rafId);
     //   }
     // }
+  }, [poses]);
 
-  }, [poses])
-
-  return <div style={{ border: "1px solid red" }}>
-    <div>Hello</div>
-    <canvas width={600} height={400} ref={canvasRef}></canvas>
-  </div>
+  return (
+    <div style={{ border: "1px solid red" }}>
+      <div>Hello</div>
+      <canvas width={600} height={400} ref={canvasRef}></canvas>
+    </div>
+  );
 }
 
 function MyApp() {
   const videoRef = React.useRef(null);
 
-  usePoseTracker({ videoRef, posesState })
+  usePoseTracker({ videoRef, posesState });
 
-  return <>
-    <video width={600} height={400} ref={videoRef} autoPlay>
-      <source src="/home-workout.mp4" type="video/mp4" />
-    </video>
-    <button onClick={() => {
-      if (isVideoPlaying(videoRef.current)) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play()
-      }
-    }}>Play/Pause</button>
-    <RenderPosesSimple />
-    <RenderPose videoRef={videoRef} />
-  </>
+  return (
+    <>
+      <video width={600} height={400} ref={videoRef} autoPlay>
+        <source src="/home-workout.mp4" type="video/mp4" />
+      </video>
+      <button
+        onClick={() => {
+          if (isVideoPlaying(videoRef.current)) {
+            videoRef.current.pause();
+          } else {
+            videoRef.current.play();
+          }
+        }}
+      >
+        Play/Pause
+      </button>
+      <RenderPosesSimple />
+      <RenderPose videoRef={videoRef} />
+    </>
+  );
 }
 
 export default () => {
-  return (<RecoilRoot>
-    <MyApp />
-  </RecoilRoot>)
-}
+  return (
+    <RecoilRoot>
+      <MyApp />
+    </RecoilRoot>
+  );
+};
