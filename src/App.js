@@ -1,4 +1,3 @@
-import logo from "./logo.svg";
 import "./App.css";
 
 import * as poseDetection from "@tensorflow-models/pose-detection";
@@ -6,16 +5,10 @@ import * as tf from "@tensorflow/tfjs-core";
 // Register WebGL backend.
 import "@tensorflow/tfjs-backend-webgl";
 
-import { drawPose, PoseArtist } from "./draw_utils";
+import { PoseArtist } from "./draw_utils";
 
 import React from "react";
-import {
-  RecoilRoot,
-  atom,
-  selector,
-  useRecoilState,
-  useRecoilValue,
-} from "recoil";
+import { RecoilRoot, atom, useRecoilState, useRecoilValue } from "recoil";
 
 var POSE_DETECTOR_MODEL = "movenet"; // "blazepose"
 
@@ -88,7 +81,7 @@ function usePoseTracker({ videoRef, posesState }) {
         poseDetector.current.dispose();
       }
     };
-  }, []);
+  }, [setPoses, videoRef]);
 }
 
 function RenderPosesSimple() {
@@ -177,10 +170,12 @@ function MyApp() {
   );
 }
 
-export default () => {
+const FullApp = () => {
   return (
     <RecoilRoot>
       <MyApp />
     </RecoilRoot>
   );
 };
+
+export default FullApp;
