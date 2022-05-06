@@ -6,7 +6,7 @@ import * as tf from "@tensorflow/tfjs-core";
 // Register WebGL backend.
 import "@tensorflow/tfjs-backend-webgl";
 
-import { drawPose } from "./draw_utils";
+import { drawPose, PoseArtist } from "./draw_utils";
 
 import React from "react";
 import {
@@ -17,18 +17,25 @@ import {
   useRecoilValue,
 } from "recoil";
 
-var poseDetectorModel = "movenet";
+var POSE_DETECTOR_MODEL = "movenet"; // "blazepose"
 
-const MODEL_BLAZEPOSE = poseDetection.SupportedModels.BlazePose;
-const DETECTOR_CONFIG_BLAZEPOSE = {
-  runtime: "tfjs",
-  enableSmoothing: true,
-  modelType: "full",
-};
-const DETECTOR_CONFIG_MOVENET = {
-  modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
-};
-const MODEL_MOVENET = poseDetection.SupportedModels.MoveNet;
+function getModelDetails(poseDetectorModel) {
+  const model =
+    poseDetectorModel === "movenet"
+      ? poseDetection.SupportedModels.MoveNet
+      : poseDetection.SupportedModels.BlazePose;
+  const modelConfig =
+    poseDetectorModel === "movenet"
+      ? {
+          modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+        }
+      : {
+          runtime: "tfjs",
+          enableSmoothing: true,
+          modelType: "full",
+        };
+  return [model, modelConfig];
+}
 
 const isVideoPlaying = (video) =>
   !!(
@@ -60,20 +67,13 @@ function usePoseTracker({ videoRef, posesState }) {
       rafId = requestAnimationFrame(runFrame);
     };
     const start = async () => {
-      const model =
-        poseDetectorModel === "movenet" ? MODEL_MOVENET : MODEL_BLAZEPOSE;
-      const detectorConfig =
-        poseDetectorModel === "movenet"
-          ? DETECTOR_CONFIG_MOVENET
-          : DETECTOR_CONFIG_BLAZEPOSE;
-
+      const [model, modelConfig] = getModelDetails(POSE_DETECTOR_MODEL);
       console.log(
-        `creating detector with model ${model} and config ${detectorConfig}`
+        `creating detector with model ${model} and config ${JSON.stringify(
+          modelConfig
+        )}`
       );
-      const detector = await poseDetection.createDetector(
-        model,
-        detectorConfig
-      );
+      const detector = await poseDetection.createDetector(model, modelConfig);
       poseDetector.current = detector;
       await runFrame();
     };
@@ -102,19 +102,36 @@ function RenderPosesSimple() {
   );
 }
 
-function RenderPose({ videoRef }) {
+function RenderPose({ model, modelConfig }) {
   const canvasRef = React.useRef(null);
   const poses = useRecoilValue(posesState);
+  const poseArtist = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!poseArtist.current && canvasRef.current) {
+      const ctx = canvasRef.current.getContext("2d");
+      const [model, modelConfig] = getModelDetails(POSE_DETECTOR_MODEL);
+      poseArtist.current = new PoseArtist(ctx, model, modelConfig);
+    }
+  }, []);
+
   React.useEffect(() => {
     // var rafId;
     const draw = async () => {
       if (canvasRef.current && poses && poses.length > 0) {
-        drawPose(
-          poses[0],
-          canvasRef.current.getContext("2d"),
-          poseDetection.SupportedModels.BlazePose,
-          0
-        );
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (poseArtist.current) {
+          // console.log("drawing..", canvas.width, canvas.height);
+          poseArtist.current.drawResults(poses);
+        }
+        // drawPose(
+        //   poses[0],
+        //   canvasRef.current.getContext("2d"),
+        //   poseDetection.SupportedModels.BlazePose,
+        //   0
+        // );
       }
     };
     draw();
