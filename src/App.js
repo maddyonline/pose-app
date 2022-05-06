@@ -1,13 +1,12 @@
 import logo from "./logo.svg";
 import "./App.css";
 
-import * as poseDetection from '@tensorflow-models/pose-detection';
-import * as tf from '@tensorflow/tfjs-core';
+import * as poseDetection from "@tensorflow-models/pose-detection";
+import * as tf from "@tensorflow/tfjs-core";
 // Register WebGL backend.
-import '@tensorflow/tfjs-backend-webgl';
+import "@tensorflow/tfjs-backend-webgl";
 
 import { drawPose } from "./draw_utils";
-
 
 import React from "react";
 import {
@@ -17,6 +16,19 @@ import {
   useRecoilState,
   useRecoilValue,
 } from "recoil";
+
+var poseDetectorModel = "movenet";
+
+const MODEL_BLAZEPOSE = poseDetection.SupportedModels.BlazePose;
+const DETECTOR_CONFIG_BLAZEPOSE = {
+  runtime: "tfjs",
+  enableSmoothing: true,
+  modelType: "full",
+};
+const DETECTOR_CONFIG_MOVENET = {
+  modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+};
+const MODEL_MOVENET = poseDetection.SupportedModels.MoveNet;
 
 const isVideoPlaying = (video) =>
   !!(
@@ -48,14 +60,21 @@ function usePoseTracker({ videoRef, posesState }) {
       rafId = requestAnimationFrame(runFrame);
     };
     const start = async () => {
-      const model = poseDetection.SupportedModels.BlazePose;
-      const detectorConfig = {
-        runtime: 'tfjs',
-        enableSmoothing: true,
-        modelType: 'full'
-      };
-      const detector = await poseDetection.createDetector(model, detectorConfig);
-      poseDetector.current = detector
+      const model =
+        poseDetectorModel === "movenet" ? MODEL_MOVENET : MODEL_BLAZEPOSE;
+      const detectorConfig =
+        poseDetectorModel === "movenet"
+          ? DETECTOR_CONFIG_MOVENET
+          : DETECTOR_CONFIG_BLAZEPOSE;
+
+      console.log(
+        `creating detector with model ${model} and config ${detectorConfig}`
+      );
+      const detector = await poseDetection.createDetector(
+        model,
+        detectorConfig
+      );
+      poseDetector.current = detector;
       await runFrame();
     };
     start();
