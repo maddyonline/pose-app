@@ -29,7 +29,7 @@ function callCallback(promise, callback) {
   });
 }
 
-function getModelDetails(poseDetectorModel) {
+export function getModelDetails(poseDetectorModel) {
   const model =
     poseDetectorModel === "movenet"
       ? posedetection.SupportedModels.MoveNet

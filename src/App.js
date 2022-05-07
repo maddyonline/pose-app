@@ -1,9 +1,11 @@
 import "./App.css";
 
 import { PoseArtist } from "./draw_utils";
-import makePoseDetector from "./PoseDetector";
+import makePoseDetector, { getModelDetails } from "./PoseDetector";
 
 import React from "react";
+
+var POSE_DETECTOR_MODEL = "movenet";
 
 const isVideoPlaying = (video) =>
   !!(
@@ -41,65 +43,59 @@ function RenderPosesSimple({ videoRef, poseDetectorRef }) {
   );
 }
 
-// function RenderPose({ model, modelConfig }) {
-//   const canvasRef = React.useRef(null);
-//   const poses = useRecoilValue(posesState);
-//   const poseArtist = React.useRef(null);
+function RenderPose({ videoRef, poseDetectorRef }) {
+  const canvasRef = React.useRef(null);
+  const poseArtist = React.useRef(null);
 
-//   React.useEffect(() => {
-//     if (!poseArtist.current && canvasRef.current) {
-//       const ctx = canvasRef.current.getContext("2d");
-//       const [model, modelConfig] = getModelDetails(POSE_DETECTOR_MODEL);
-//       poseArtist.current = new PoseArtist(ctx, model, modelConfig);
-//     }
-//   }, []);
+  React.useEffect(() => {
+    if (!poseArtist.current && canvasRef.current) {
+      const ctx = canvasRef.current.getContext("2d");
+      const [model, modelConfig] = getModelDetails(POSE_DETECTOR_MODEL);
+      poseArtist.current = new PoseArtist(ctx, model, modelConfig);
+    }
+  }, []);
 
-//   React.useEffect(() => {
-//     // var rafId;
-//     const draw = async () => {
-//       if (canvasRef.current && poses && poses.length > 0) {
-//         const canvas = canvasRef.current;
-//         const ctx = canvas.getContext("2d");
-//         ctx.clearRect(0, 0, canvas.width, canvas.height);
-//         if (poseArtist.current) {
-//           // console.log("drawing..", canvas.width, canvas.height);
-//           poseArtist.current.drawResults(poses);
-//         }
-//         // drawPose(
-//         //   poses[0],
-//         //   canvasRef.current.getContext("2d"),
-//         //   poseDetection.SupportedModels.BlazePose,
-//         //   0
-//         // );
-//       }
-//     };
-//     draw();
-//     // return () => {
-//     //   if (rafId) {
-//     //     cancelAnimationFrame(rafId);
-//     //   }
-//     // }
-//   }, [poses]);
+  const drawFunction = React.useCallback(
+    async (poses) => {
+      if (canvasRef.current && poses && poses.length > 0) {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (poseArtist.current) {
+          poseArtist.current.drawResults(poses);
+        }
+      }
+    },
+    [canvasRef.current, poseArtist.current]
+  );
 
-//   return (
-//     <div style={{ border: "1px solid red" }}>
-//       <div>Hello</div>
-//       <canvas width={600} height={400} ref={canvasRef}></canvas>
-//     </div>
-//   );
-// }
+  return (
+    <div style={{ border: "1px solid red" }}>
+      <div>Hello</div>
+      <canvas width={600} height={400} ref={canvasRef}></canvas>
+      <button
+        onClick={() => {
+          if (isVideoPlaying(videoRef.current)) {
+            videoRef.current.pause();
+            poseDetectorRef.current.removeAllListeners();
+          } else {
+            if (poseDetectorRef.current) {
+              poseDetectorRef.current.removeAllListeners();
+              poseDetectorRef.current.on("pose", drawFunction);
+            }
+            videoRef.current.play();
+          }
+        }}
+      >
+        Draw
+      </button>
+    </div>
+  );
+}
 
 function MyApp() {
   const videoRef = React.useRef(null);
   const poseDetectorRef = React.useRef(null);
-
-  // const modelReady = React.useCallback(() => console.log("Model Ready"));
-  // const onPoses = React.useCallback((poses) =>
-  //   console.log("poses", poses && poses.length)
-  // );
-  // const onPoses2 = React.useCallback((poses) =>
-  //   console.log("poses", poses && poses[0].keypoints)
-  // );
 
   React.useEffect(() => {
     console.log("here");
@@ -111,7 +107,7 @@ function MyApp() {
       const video = videoRef.current;
       const poseDetector = makePoseDetector(
         video,
-        { poseDetectorModel: "blazepose" },
+        { poseDetectorModel: POSE_DETECTOR_MODEL },
         modelReady
       );
 
@@ -131,6 +127,7 @@ function MyApp() {
         videoRef={videoRef}
         poseDetectorRef={poseDetectorRef}
       />
+      <RenderPose videoRef={videoRef} poseDetectorRef={poseDetectorRef} />
     </>
   );
 }
