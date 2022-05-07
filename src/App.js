@@ -15,15 +15,27 @@ const isVideoPlaying = (video) =>
     video.readyState > 2
   );
 
-function RenderPosesSimple({ poseDetectorRef }) {
-  const listener = React.useCallback((poses) => console.log(poses), []);
-  React.useEffect(() => {
-    poseDetectorRef.addListener("poses", listener);
-    return () => poseDetectorRef.removeListener("poses", listener);
-  }, []);
+function RenderPosesSimple({ videoRef, poseDetectorRef }) {
+  const onPoses = React.useCallback((poses) => console.log(poses.length), []);
   return (
     <>
       <div>Poses Simple</div>
+      <button
+        onClick={() => {
+          if (isVideoPlaying(videoRef.current)) {
+            videoRef.current.pause();
+            poseDetectorRef.current.removeAllListeners();
+          } else {
+            if (poseDetectorRef.current) {
+              poseDetectorRef.current.removeAllListeners();
+              poseDetectorRef.current.on("pose", onPoses);
+            }
+            videoRef.current.play();
+          }
+        }}
+      >
+        Play/Pause
+      </button>
     </>
   );
 }
@@ -107,22 +119,10 @@ function MyApp() {
       <video width={600} height={400} ref={videoRef} autoPlay>
         <source src="/home-workout.mp4" type="video/mp4" />
       </video>
-      <button
-        onClick={() => {
-          if (isVideoPlaying(videoRef.current)) {
-            videoRef.current.pause();
-            poseDetectorRef.current.removeAllListeners();
-          } else {
-            if (poseDetectorRef.current) {
-              poseDetectorRef.current.removeAllListeners();
-              poseDetectorRef.current.on("pose", onPoses);
-            }
-            videoRef.current.play();
-          }
-        }}
-      >
-        Play/Pause
-      </button>
+      <RenderPosesSimple
+        videoRef={videoRef}
+        poseDetectorRef={poseDetectorRef}
+      />
     </>
   );
 }
