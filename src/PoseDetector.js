@@ -29,8 +29,6 @@ function callCallback(promise, callback) {
   });
 }
 
-
-
 function getModelDetails(poseDetectorModel) {
   const model =
     poseDetectorModel === "movenet"
@@ -132,36 +130,7 @@ class PoseDetector extends EventEmitter {
   }
 }
 
-const makePoseDetector = (videoOrOptionsOrCallback, optionsOrCallback, cb) => {
-  let video;
-  let options = {
-    poseDetectorModel: "movenet",
-  };
-  let callback = cb;
-
-  if (videoOrOptionsOrCallback instanceof HTMLVideoElement) {
-    video = videoOrOptionsOrCallback;
-  } else if (
-    typeof videoOrOptionsOrCallback === "object" &&
-    videoOrOptionsOrCallback.elt instanceof HTMLVideoElement
-  ) {
-    video = videoOrOptionsOrCallback.elt; // Handle a p5.js video element
-  } else if (typeof videoOrOptionsOrCallback === "object") {
-    options = videoOrOptionsOrCallback;
-  } else if (typeof videoOrOptionsOrCallback === "function") {
-    callback = videoOrOptionsOrCallback;
-  }
-
-  if (typeof optionsOrCallback === "object") {
-    options = optionsOrCallback;
-  } else if (typeof optionsOrCallback === "string") {
-    options.poseDetectorModel = optionsOrCallback;
-  }
-
-  if (typeof optionsOrCallback === "function") {
-    callback = optionsOrCallback;
-  }
-
+const makePoseDetector = (video, options, callback) => {
   return new PoseDetector(video, options, callback);
 };
 

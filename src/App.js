@@ -5,8 +5,6 @@ import makePoseDetector from "./PoseDetector";
 
 import React from "react";
 
-var POSE_DETECTOR_MODEL = "movenet"; // "blazepose"
-
 const isVideoPlaying = (video) =>
   !!(
     video.currentTime > 0 &&
@@ -16,7 +14,10 @@ const isVideoPlaying = (video) =>
   );
 
 function RenderPosesSimple({ videoRef, poseDetectorRef }) {
-  const onPoses = React.useCallback((poses) => console.log(poses.length), []);
+  const onPoses = React.useCallback(
+    (poses) => console.log(poses && poses[0] && poses[0].keypoints.length),
+    []
+  );
   return (
     <>
       <div>Poses Simple</div>
@@ -92,20 +93,27 @@ function MyApp() {
   const videoRef = React.useRef(null);
   const poseDetectorRef = React.useRef(null);
 
-  const modelReady = React.useCallback(() => console.log("Model Ready"));
-  const onPoses = React.useCallback((poses) =>
-    console.log("poses", poses && poses.length)
-  );
-  const onPoses2 = React.useCallback((poses) =>
-    console.log("poses", poses && poses[0].keypoints)
-  );
+  // const modelReady = React.useCallback(() => console.log("Model Ready"));
+  // const onPoses = React.useCallback((poses) =>
+  //   console.log("poses", poses && poses.length)
+  // );
+  // const onPoses2 = React.useCallback((poses) =>
+  //   console.log("poses", poses && poses[0].keypoints)
+  // );
 
   React.useEffect(() => {
     console.log("here");
     if (videoRef.current && !poseDetectorRef.current) {
       console.log("here2");
+      function modelReady() {
+        console.log("Model ready");
+      }
       const video = videoRef.current;
-      const poseDetector = makePoseDetector(video, modelReady);
+      const poseDetector = makePoseDetector(
+        video,
+        { poseDetectorModel: "blazepose" },
+        modelReady
+      );
 
       poseDetectorRef.current = poseDetector;
       window.poseDetectorRef = poseDetectorRef;
